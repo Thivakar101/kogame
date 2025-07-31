@@ -1,0 +1,2562 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Spelling Practice</title>
+<!-- Add polyfills for old browsers -->
+<script src="https://polyfill.io/v3/polyfill.min.js?features=default,fetch,Promise,Array.prototype.includes,Object.assign,Map,Set,Symbol,URL,URLSearchParams"></script>
+<script src="https://cdn.jsdelivr.net/npm/es5-shim/es5-shim.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/es6-shim/es6-shim.min.js"></script>
+
+<!-- Street Fighter Style Font -->
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
+
+
+
+    
+    <!-- Audio files for sound effects -->
+    <audio id="keyClickSound" preload="auto">
+        <source src="https://assets.mixkit.co/active_storage/sfx/2571/2571-preview.mp3" type="audio/mp3">
+    </audio>
+    <audio id="optionClickSound" preload="auto">
+        <source src="https://assets.mixkit.co/active_storage/sfx/2568/2568-preview.mp3" type="audio/mp3">
+    </audio>
+    
+    <!-- LogRocket initialization -->
+    <script src="https://cdn.lr-ingest.com/LogRocket.min.js"></script>
+    <script>
+        window.LogRocket && window.LogRocket.init('hit1rk/word360');
+        
+        // Track spelling drill game view
+        LogRocket.track('Spelling Drill Game View');
+        
+        // Identify user if needed
+        const logRocketUserId = localStorage.getItem('auth_userId');
+        const logRocketUserName = localStorage.getItem('auth_name');
+        if (logRocketUserId) {
+            LogRocket.identify(logRocketUserId, {
+                name: logRocketUserName || 'Spelling Drill Player',
+                gameType: 'spelling_drill'
+            });
+        }
+    </script>
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .app-container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            padding: 40px;
+            max-width: 600px;
+            width: 90%;
+            text-align: center;
+        }
+
+        .header {
+            margin-bottom: 30px;
+        }
+
+        .progress-bar {
+            background: #e0e0e0;
+            height: 8px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            background: linear-gradient(90deg, #58cc02, #89e219);
+            height: 100%;
+            border-radius: 4px;
+            transition: width 0.3s ease;
+            width: 0%;
+        }
+
+        .question-counter {
+            color: #777;
+            font-size: 14px;
+            margin-bottom: 20px;
+        }
+
+        .question-type {
+            background: #f0f0f0;
+            padding: 8px 16px;
+            border-radius: 20px;
+            display: inline-block;
+            font-size: 12px;
+            color: #666;
+            margin-bottom: 20px;
+            text-transform: uppercase;
+            font-weight: 600;
+        }
+
+        .sound-button {
+            background: #58cc02;
+            border: none;
+            border-radius: 50%;
+            width: 80px;
+            height: 80px;
+            color: white;
+            font-size: 24px;
+            cursor: pointer;
+            margin: 20px 0;
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 12px rgba(88, 204, 2, 0.3);
+        }
+
+        .sound-button:hover {
+            background: #4caf50;
+            transform: scale(1.05);
+        }
+
+        .sound-button:active {
+            transform: scale(0.95);
+        }
+
+        .question-text {
+            font-size: 24px;
+            margin-bottom: 30px;
+            color: #333;
+            line-height: 1.4;
+        }
+
+        .input-container {
+            margin: 30px 0;
+        }
+
+        .attempts-container {
+            margin: 20px 0;
+        }
+
+        .attempt-section {
+            margin: 20px 0;
+        }
+
+        .attempt-label {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+
+        .word-boxes {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            margin: 10px 0;
+            flex-wrap: wrap;
+        }
+
+        .letter-box {
+            width: 50px;
+            height: 50px;
+            border: 3px solid #d3d6da;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            font-weight: bold;
+            text-transform: uppercase;
+            background: white;
+            transition: all 0.2s ease;
+        }
+
+        .letter-box.filled {
+            border-color: #878a8c;
+            background: #f8f9fa;
+        }
+
+        .letter-box.current {
+            border-color: #58cc02;
+            animation: pulse 1s infinite;
+        }
+
+        .letter-box.correct {
+            background: #6aaa64 !important;
+            color: white !important;
+            border-color: #6aaa64 !important;
+        }
+
+        .letter-box.correct-position {
+            background: #4CAF50 !important;
+            color: white !important;
+            border-color: #4CAF50 !important;
+            animation: flipTile 0.5s ease forwards;
+        }
+
+        .letter-box.wrong-position {
+            background: #FFD700 !important;
+            color: #333 !important;
+            border-color: #FFD700 !important;
+            animation: flipTile 0.5s ease forwards;
+        }
+
+        .letter-box.incorrect {
+            background: #808080 !important;
+            color: rgba(255, 255, 255, 0.7) !important;
+            border-color: #808080 !important;
+            animation: flipTile 0.5s ease forwards;
+        }
+
+        .letter-box.disabled {
+            background: #f5f5f5;
+            border-color: #ddd;
+            color: #888;
+        }
+
+        @keyframes flipTile {
+            0% {
+                transform: rotateX(0);
+            }
+            50% {
+                transform: rotateX(90deg);
+            }
+            100% {
+                transform: rotateX(0);
+            }
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        .keyboard {
+            margin: 20px 0;
+            max-width: 500px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .keyboard-row {
+            display: flex;
+            justify-content: center;
+            margin: 6px 0;
+            gap: 4px;
+        }
+
+        .key {
+            background: #d3d6da;
+            border: none;
+            border-radius: 4px;
+            font-size: 14px;
+            font-weight: bold;
+            height: 40px;
+            cursor: pointer;
+            transition: all 0.1s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-transform: uppercase;
+            color: #000;
+        }
+
+        .key:hover {
+            background: #bbbfc3;
+        }
+
+        .key:active {
+            transform: scale(0.95);
+        }
+
+        .key.letter {
+            width: 35px;
+        }
+
+        .key.wide {
+            width: 60px;
+            font-size: 12px;
+        }
+
+        .key.space {
+            width: 40px;
+        }
+
+        .key.correct {
+            background: #4CAF50 !important; /* Green */
+            color: white;
+        }
+
+        .key.present {
+            background: #FFD700 !important; /* Orange/Gold */
+            color: #333;
+        }
+
+        .key.absent {
+            background: #808080 !important; /* Grey */
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        .word-input {
+            display: none;
+        }
+
+        .options-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 20px;
+            margin: 30px auto;
+            width: 100%;
+            max-width: 600px;
+        }
+
+        .options-row {
+            display: flex;
+            gap: 20px;
+            width: 100%;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        /* Override for 4-option layout - keep container properties */
+        .options-container.options-4 {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 20px;
+            margin: 30px auto;
+            width: 100%;
+            max-width: 500px;
+        }
+        
+        /* Override for 2-option layout - keep container properties */
+        .options-container.options-2 {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 20px;
+            margin: 30px auto;
+            width: 100%;
+            max-width: 400px;
+        }
+
+        /* Vertical spacing between option rows */
+        .options-container > .options-row:not(:last-child) {
+            margin-bottom: 10px;
+        }
+
+        .option-btn {
+            background: white;
+            border: 3px solid #e0e0e0;
+            border-radius: 12px;
+            padding: 20px 24px;
+            font-size: 18px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            min-height: 80px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+
+        .option-btn:hover {
+            border-color: #58cc02;
+            background: #f8fff8;
+        }
+
+        .option-btn.selected {
+            border-color: #58cc02;
+            background: #58cc02;
+            color: white;
+        }
+
+        .option-btn.correct {
+            border-color: #58cc02;
+            background: #58cc02;
+            color: white;
+            font-size: 22px;
+            font-weight: 700;
+            transform: scale(1.05);
+            box-shadow: 0 4px 12px rgba(88, 204, 2, 0.3);
+            transition: all 0.3s ease;
+        }
+
+        .option-btn.incorrect {
+            border-color: #ff6b6b;
+            background: #ff6b6b;
+            color: white;
+        }
+
+        .feedback {
+            margin: 20px 0;
+            padding: 16px;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 16px;
+            opacity: 0;
+            transform: translateY(10px);
+            transition: all 0.3s ease;
+        }
+
+        .feedback.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .feedback.correct {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .feedback.incorrect {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .buttons-container {
+            margin-top: 30px;
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+        }
+
+        .btn {
+            padding: 14px 32px;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .btn-check {
+            background: #58cc02;
+            color: white;
+        }
+
+        .btn-check:hover {
+            background: #4caf50;
+            transform: translateY(-2px);
+        }
+
+        .btn-check:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-continue {
+            background: #58cc02;
+            color: white;
+        }
+
+        .btn-continue:hover {
+            background: #46a302;
+            transform: translateY(-2px);
+        }
+
+        .mode-indicator {
+            background: #ff9500;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-bottom: 20px;
+            display: inline-block;
+            text-transform: uppercase;
+        }
+
+        .practice-mode {
+            background: #e74c3c;
+            color: white;
+        }
+
+        .word-display {
+            font-size: 32px;
+            font-weight: bold;
+            color: #58cc02;
+            margin: 20px 0;
+            letter-spacing: 2px;
+        }
+
+        .completion-screen {
+            text-align: center;
+        }
+
+        .completion-title {
+            font-size: 28px;
+            color: #58cc02;
+            margin-bottom: 20px;
+            font-weight: bold;
+        }
+
+        .completion-stats {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+
+        .stat-item {
+            display: flex;
+            justify-content: space-between;
+            margin: 10px 0;
+            font-size: 16px;
+        }
+
+        .restart-btn {
+            background: #58cc02;
+            color: white;
+            padding: 14px 32px;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            cursor: pointer;
+            margin-top: 20px;
+        }
+
+        .failed-words-list {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            border-radius: 12px;
+            padding: 15px;
+            margin: 15px 0;
+            text-align: left;
+        }
+
+        .failed-words-title {
+            font-weight: bold;
+            color: #856404;
+            margin-bottom: 10px;
+        }
+
+        .failed-word-item {
+            background: #fd79a8;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 15px;
+            display: inline-block;
+            margin: 3px;
+            font-size: 14px;
+        }
+
+        .review-button {
+            background: #ff6b6b;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+            margin-left: 15px;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .review-button:hover {
+            background: #ff5252;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+        }
+
+        .review-button:active {
+            transform: translateY(0);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        /* Card Display Styles */
+        .card-display {
+            text-align: center;
+            padding: 40px 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 20px;
+            color: white;
+            max-width: 500px;
+            margin: 0 auto;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+
+        .card-title {
+            font-size: 28px;
+            font-weight: bold;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .card-subtitle {
+            font-size: 18px;
+            margin-bottom: 30px;
+            opacity: 0.9;
+        }
+
+        .card-container {
+            margin: 30px 0;
+            padding: 20px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+        }
+
+        .reward-card {
+            max-width: 200px;
+            max-height: 300px;
+            border-radius: 10px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+            transition: transform 0.3s ease;
+        }
+
+        .reward-card:hover {
+            transform: scale(1.05);
+        }
+
+        .card-points {
+            font-size: 20px;
+            font-weight: bold;
+            margin: 20px 0;
+            color: #ffd700;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+        }
+
+        /* Word Hint Styles */
+        .word-hint {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px 20px;
+            border-radius: 15px;
+            margin: 15px auto;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            text-align: center;
+            max-width: 500px;
+            width: fit-content;
+            display: block;
+        }
+
+        .hint-label {
+            font-size: 14px;
+            font-weight: bold;
+            opacity: 0.9;
+            margin-bottom: 5px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .hint-text {
+            font-size: 16px;
+            line-height: 1.4;
+            font-weight: 500;
+        }
+
+        /* Tablet Portrait Mode (768px - 1024px) */
+        @media (min-width: 481px) and (max-width: 1024px) and (orientation: portrait) {
+            .app-container {
+                padding: 25px;
+                max-width: 100%;
+            }
+            
+            .header {
+                margin-bottom: 20px;
+            }
+            
+            .question-counter {
+                font-size: 16px;
+            }
+            
+            .review-button {
+                font-size: 13px;
+                padding: 6px 12px;
+                margin-left: 10px;
+            }
+            
+            .sound-button {
+                width: 80px;
+                height: 80px;
+                font-size: 32px;
+                margin: 20px auto;
+            }
+            
+            .question-text {
+                font-size: 20px;
+                margin: 20px 0;
+            }
+            
+            .word-hint {
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                color: white;
+                padding: 12px 18px;
+                border-radius: 15px;
+                margin: 12px auto;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+                text-align: center;
+                max-width: 90%;
+                width: fit-content;
+                display: block;
+            }
+            
+            .hint-text {
+                font-size: 15px;
+            }
+            
+            .word-boxes {
+                gap: 8px;
+                margin: 20px 0;
+            }
+            
+            .letter-box {
+                width: 45px;
+                height: 45px;
+                font-size: 20px;
+            }
+            
+            .keyboard {
+                max-width: 90%;
+                margin: 25px auto;
+            }
+            
+            .key {
+                min-width: 35px;
+                height: 45px;
+                font-size: 16px;
+                margin: 2px;
+            }
+            
+            .key.wide {
+                min-width: 60px;
+            }
+            
+            .options-container {
+                margin: 25px 0;
+            }
+            
+            .options-4 {
+                grid-template-columns: 1fr 1fr;
+                gap: 15px;
+                max-width: 90%;
+            }
+            
+            .options-2 {
+                max-width: 70%;
+                gap: 15px;
+            }
+            
+            .option-btn {
+                padding: 15px 20px;
+                font-size: 16px;
+                min-height: 60px;
+            }
+            
+            .buttons-container {
+                margin: 25px 0;
+                gap: 15px;
+            }
+            
+            .btn {
+                padding: 12px 25px;
+                font-size: 16px;
+                min-height: 50px;
+            }
+            
+            .completion-screen {
+                padding: 25px;
+                max-width: 90%;
+            }
+            
+            .card-display {
+                padding: 30px 20px;
+                max-width: 90%;
+            }
+            
+            .reward-card {
+                max-width: 180px;
+                max-height: 270px;
+            }
+        }
+        
+        /* Mobile Phones (max-width: 480px) */
+        @media (max-width: 480px) {
+            .app-container {
+                padding: 15px;
+            }
+            
+            .review-button {
+                font-size: 12px;
+                padding: 5px 10px;
+                margin-left: 8px;
+            }
+            
+            .sound-button {
+                width: 60px;
+                height: 60px;
+                font-size: 24px;
+            }
+            
+            .question-text {
+                font-size: 16px;
+            }
+            
+            .word-hint {
+                padding: 10px 15px;
+                margin: 10px 0;
+            }
+            
+            .hint-text {
+                font-size: 14px;
+            }
+            
+            .letter-box {
+                width: 35px;
+                height: 35px;
+                font-size: 16px;
+            }
+            
+            .key {
+                min-width: 28px;
+                height: 38px;
+                font-size: 14px;
+            }
+            
+            .key.wide {
+                min-width: 50px;
+            }
+            
+            .options-4 {
+                grid-template-columns: 1fr;
+                gap: 10px;
+            }
+            
+            .option-btn {
+                padding: 12px 15px;
+                font-size: 14px;
+                min-height: 50px;
+            }
+            
+            .buttons-container {
+                flex-direction: column;
+                gap: 10px;
+            }
+            
+            .btn {
+                padding: 10px 20px;
+                font-size: 14px;
+            }
+            
+            .completion-screen {
+                padding: 20px;
+            }
+            
+            .card-display {
+                padding: 25px 15px;
+            }
+            
+            .reward-card {
+                max-width: 150px;
+                max-height: 225px;
+            }
+        }
+
+        /* Laptop/Desktop Screens (1025px and above) */
+        @media (min-width: 1025px) {
+            .word-hint {
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                color: white;
+                padding: 15px 20px;
+                border-radius: 15px;
+                margin: 15px auto;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+                text-align: center;
+                max-width: 500px;
+                width: fit-content;
+                display: block;
+            }
+        }
+
+        /* Streak Video Overlay Styles */
+        .streak-video-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            animation: fadeIn 0.3s ease-in;
+        }
+
+        .streak-video-container {
+            text-align: center;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 30px;
+            border-radius: 20px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        .streak-title {
+            font-family: 'Orbitron', monospace;
+            color: #FFD700;
+            font-size: 42px;
+            font-weight: 900;
+            margin-bottom: 20px;
+            text-shadow: 
+                3px 3px 0px #FF0000,
+                6px 6px 0px #000000,
+                0 0 20px #FFD700,
+                0 0 30px #FFD700,
+                0 0 40px #FFD700;
+            animation: streetFighterGlow 1.5s ease-in-out infinite alternate;
+            letter-spacing: 4px;
+            text-transform: uppercase;
+            transform: perspective(500px) rotateX(15deg);
+        }
+
+        .streak-subtitle {
+            color: white;
+            font-size: 18px;
+            margin-bottom: 30px;
+            opacity: 0.9;
+        }
+
+        .streak-video {
+            max-width: 80vw;
+            max-height: 60vh;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+        }
+
+        .streak-continue-btn {
+            background: #58cc02;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 20px;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .streak-continue-btn:hover {
+            background: #46a302;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(88, 204, 2, 0.4);
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes streetFighterGlow {
+            0% {
+                text-shadow: 
+                    3px 3px 0px #FF0000,
+                    6px 6px 0px #000000,
+                    0 0 20px #FFD700,
+                    0 0 30px #FFD700,
+                    0 0 40px #FFD700;
+                transform: perspective(500px) rotateX(15deg) scale(1);
+            }
+            50% {
+                text-shadow: 
+                    4px 4px 0px #FF4500,
+                    8px 8px 0px #000000,
+                    0 0 25px #FFD700,
+                    0 0 35px #FFD700,
+                    0 0 45px #FFD700,
+                    0 0 55px #FF0000;
+                transform: perspective(500px) rotateX(15deg) scale(1.05);
+            }
+            100% {
+                text-shadow: 
+                    5px 5px 0px #FF6600,
+                    10px 10px 0px #000000,
+                    0 0 30px #FFD700,
+                    0 0 40px #FFD700,
+                    0 0 50px #FFD700,
+                    0 0 60px #FF0000,
+                    0 0 70px #FF0000;
+                transform: perspective(500px) rotateX(15deg) scale(1.1);
+            }
+        }
+
+        @keyframes glow {
+            from {
+                text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5), 0 0 10px #FFD700;
+            }
+            to {
+                text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5), 0 0 20px #FFD700, 0 0 30px #FFD700;
+            }
+        }
+
+        /* Mobile Responsive */
+        @media (max-width: 768px) {
+            .streak-title {
+                font-size: 32px;
+                letter-spacing: 2px;
+                text-shadow: 
+                    2px 2px 0px #FF0000,
+                    4px 4px 0px #000000,
+                    0 0 15px #FFD700,
+                    0 0 25px #FFD700,
+                    0 0 35px #FFD700;
+            }
+            
+            .streak-subtitle {
+                font-size: 16px;
+            }
+            
+            .streak-video {
+                max-width: 90vw;
+                max-height: 50vh;
+            }
+            
+            .streak-video-container {
+                padding: 20px;
+                margin: 0 10px;
+            }
+        }
+
+        /* Street Fighter Punch Effect */
+        .punch-effect {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-family: 'Orbitron', monospace;
+            font-size: 120px;
+            font-weight: 900;
+            color: #FFD700;
+            text-shadow: 
+                4px 4px 0px #FF0000,
+                8px 8px 0px #000000,
+                0 0 30px #FFD700,
+                0 0 40px #FFD700,
+                0 0 50px #FFD700;
+            z-index: 10000;
+            pointer-events: none;
+            opacity: 0;
+            animation: punchImpact 1.2s ease-out forwards;
+            text-transform: uppercase;
+            letter-spacing: 8px;
+        }
+
+        @keyframes punchImpact {
+            0% {
+                opacity: 0;
+                transform: translate(-50%, -50%) scale(0.3) rotate(-10deg);
+                filter: blur(10px);
+            }
+            15% {
+                opacity: 1;
+                transform: translate(-50%, -50%) scale(1.5) rotate(5deg);
+                filter: blur(0px);
+                text-shadow: 
+                    6px 6px 0px #FF0000,
+                    12px 12px 0px #000000,
+                    0 0 40px #FFD700,
+                    0 0 50px #FFD700,
+                    0 0 60px #FFD700,
+                    0 0 70px #FF0000;
+            }
+            30% {
+                opacity: 1;
+                transform: translate(-50%, -50%) scale(1.2) rotate(-2deg);
+                filter: blur(0px);
+            }
+            60% {
+                opacity: 1;
+                transform: translate(-50%, -50%) scale(1.1) rotate(1deg);
+            }
+            100% {
+                opacity: 0;
+                transform: translate(-50%, -50%) scale(0.8) rotate(0deg);
+                filter: blur(5px);
+            }
+        }
+
+        /* Mobile responsive punch effect */
+        @media (max-width: 768px) {
+            .punch-effect {
+                font-size: 80px;
+                letter-spacing: 4px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .punch-effect {
+                font-size: 60px;
+                letter-spacing: 2px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <div class="header">
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill"></div>
+            </div>
+            <!-- Removed numbers from progress bar as requested -->
+            <div class="question-counter" id="questionCounter"></div>
+        </div>
+
+        <div id="gameContent">
+            <div class="question-type" id="questionType">Type what you hear</div>
+            <div class="mode-indicator" id="modeIndicator" style="display: none;">Learning Mode</div>
+            
+            <button class="sound-button" id="soundButton">🔊</button>
+            
+            <!-- Removed questionText div as requested -->
+            
+            <div class="word-hint" id="wordHint" style="display: none;">
+                <div class="hint-text" id="hintText"></div>
+            </div>
+            
+            <div class="input-container" id="inputContainer">
+                <input type="text" class="word-input" id="wordInput" placeholder="Type here...">
+                
+                <div class="attempts-container" id="attemptsContainer">
+                    <!-- Previous attempts will be shown here -->
+                    <div class="attempt-section" id="previousAttempt" style="display: none;">
+                        <div class="word-boxes" id="previousWordBoxes"></div>
+                    </div>
+                    
+                    <!-- Current attempt -->
+                    <div class="attempt-section" id="currentAttempt">
+                        <div class="word-boxes" id="wordBoxes"></div>
+                    </div>
+                </div>
+                
+                <div class="keyboard" id="keyboard">
+                    <div class="keyboard-row">
+                        <button class="key letter" data-key="q">Q</button>
+                        <button class="key letter" data-key="w">W</button>
+                        <button class="key letter" data-key="e">E</button>
+                        <button class="key letter" data-key="r">R</button>
+                        <button class="key letter" data-key="t">T</button>
+                        <button class="key letter" data-key="y">Y</button>
+                        <button class="key letter" data-key="u">U</button>
+                        <button class="key letter" data-key="i">I</button>
+                        <button class="key letter" data-key="o">O</button>
+                        <button class="key letter" data-key="p">P</button>
+                    </div>
+                    <div class="keyboard-row">
+                        <button class="key letter" data-key="a">A</button>
+                        <button class="key letter" data-key="s">S</button>
+                        <button class="key letter" data-key="d">D</button>
+                        <button class="key letter" data-key="f">F</button>
+                        <button class="key letter" data-key="g">G</button>
+                        <button class="key letter" data-key="h">H</button>
+                        <button class="key letter" data-key="j">J</button>
+                        <button class="key letter" data-key="k">K</button>
+                        <button class="key letter" data-key="l">L</button>
+                    </div>
+                    <div class="keyboard-row">
+                        <button class="key letter" data-key="z">Z</button>
+                        <button class="key letter" data-key="x">X</button>
+                        <button class="key letter" data-key="c">C</button>
+                        <button class="key letter" data-key="v">V</button>
+                        <button class="key letter" data-key="b">B</button>
+                        <button class="key letter" data-key="n">N</button>
+                        <button class="key letter" data-key="m">M</button>
+                        <button class="key wide" data-key="backspace">⌫</button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="options-container" id="optionsContainer" style="display: none;"></div>
+            
+            <div class="feedback" id="feedback"></div>
+            
+            <div class="buttons-container">
+                <button class="btn btn-check" id="checkButton">Check</button>
+                <button class="btn btn-continue" id="continueButton" style="display: none;">Continue</button>
+            </div>
+        </div>
+
+        <div id="completionScreen" style="display: none;">
+            <div class="completion-screen">
+                <div class="completion-title">🎉 Great Job!</div>
+                <div class="completion-stats" id="completionStats"></div>
+                
+                <!-- Failed words display -->
+                <div id="failedWordsDisplay" style="display: none;">
+                    <div class="failed-words-list">
+                        <div class="failed-words-title">Words you need to review:</div>
+                        <div id="failedWordsList"></div>
+                    </div>
+                    <button class="btn btn-continue" id="startPracticeButton">Start Review</button>
+                </div>
+                
+                <!-- Show card button for perfect scores -->
+                <div id="perfectScoreCard" style="display: none;">
+                    <button class="btn btn-continue" id="showCardButton">🎉 Claim Your Reward Card!</button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Card Display Screen -->
+        <div id="cardScreen" style="display: none;">
+            <div class="card-display">
+                <div class="card-title">🎉 Congratulations! 🎉</div>
+                <div class="card-subtitle">You've earned a reward card!</div>
+                <div class="card-container">
+                    <img src="13.png" alt="Reward Card" class="reward-card" id="rewardCardImage">
+                </div>
+                <div class="card-points" id="cardPoints">Points Earned: 100</div>
+                <button class="btn btn-continue" id="finishButton">Finish</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Streak Video Overlay -->
+    <div id="streakVideoOverlay" class="streak-video-overlay">
+        <div class="streak-video-container">
+            <div class="streak-title">🔥 5 STREAK! 🔥</div>
+            <div class="streak-subtitle">Amazing! You're on fire!</div>
+            <video id="streakVideo" class="streak-video" preload="none">
+                <source src="Untitled video - Made with Clipchamp.mp4" type="video/mp4">
+                Your browser does not support the video tag.
+            </video>
+            <button class="streak-continue-btn" id="streakContinueBtn">Continue</button>
+        </div>
+    </div>
+
+    <script>
+        class SpellingApp {
+            constructor() {
+                this.reviewWords = ['privilege', 'february'];
+                this.newWords = ['guarantee', 'vacuum', 'maintenance', 'acknowledge', 'rhythm', 'restaurant'];
+                this.learningWords = [];
+                
+                // Word hints for better understanding
+                this.wordHints = {
+                    'privilege': '👑 A special right or advantage given to someone',
+                    'february': '📅 The second month of the year',
+                    'guarantee': '✅ A promise that something will work or happen',
+                    'vacuum': '🌪️ A space with no air, or a cleaning machine',
+                    'maintenance': '🔧 The work of keeping something in good condition',
+                    'acknowledge': '👋 To accept or admit that something exists or is true',
+                    'rhythm': '🎵 A regular repeated pattern of sounds or beats',
+                    'restaurant': '🍽️ A place where people pay to eat meals'
+                };
+                this.allQuestions = [];
+                this.currentQuestionIndex = 0;
+                this.score = 0;
+                this.wrongWords = [];
+                this.isPracticeMode = false;
+                this.practiceWords = [];
+                this.currentAttempt = 1;
+                this.maxAttempts = 2;
+                this.typedWord = '';
+                this.maxLength = 0;
+                this.selectedOption = null;
+                
+                // Audio configuration
+                this.audioPath = './audio/'; // Default audio folder path
+                this.audioFormat = '.mp3'; // Default audio format
+                
+                // Initialize stats object
+                this.stats = {
+                    correct: 0,
+                    total: 0,
+                    wordsToLearn: [],
+                    failedReviewWords: [],
+                    failedNewWords: []
+                };
+                
+                // Initialize other missing properties
+                this.practiceQuestions = [];
+                this.practiceCompleted = false;
+                this.learningModeAdded = false;
+                
+                // Streak tracking
+                this.currentStreak = 0;
+                this.hasShownStreakVideo = false; // Prevent showing video multiple times
+                
+                this.initializeQuestions();
+                this.bindEvents();
+                this.displayCurrentQuestion();
+            }
+
+            initializeQuestions() {
+                if (this.isPracticeMode) {
+                    // In practice mode, only show the failed words as 4-option MCQs
+                    this.allQuestions = [...this.practiceQuestions];
+                    return;
+                }
+
+                // Review words: 4-option MCQ -> 2-option MCQ -> Full typing
+                this.reviewWords.forEach(word => {
+                    this.allQuestions.push({
+                        word: word,
+                        type: '4-option',
+                        category: 'review'
+                    });
+                    this.allQuestions.push({
+                        word: word,
+                        type: '2-option',
+                        category: 'review'
+                    });
+                    this.allQuestions.push({
+                        word: word,
+                        type: 'typing',
+                        category: 'review'
+                    });
+                });
+
+                // New words: Full typing only (MCQs added conditionally)
+                this.newWords.forEach(word => {
+                    this.allQuestions.push({
+                        word: word,
+                        type: 'typing',
+                        category: 'new'
+                    });
+                });
+            }
+
+            bindEvents() {
+                document.getElementById('soundButton').addEventListener('click', () => this.playSound());
+                document.getElementById('checkButton').addEventListener('click', () => this.checkAnswer());
+                document.getElementById('continueButton').addEventListener('click', () => this.nextQuestion());
+                document.getElementById('startPracticeButton').addEventListener('click', () => this.startPracticeMode());
+                document.getElementById('showCardButton').addEventListener('click', () => this.showCard());
+                document.getElementById('finishButton').addEventListener('click', () => this.restartGame());
+                document.getElementById('streakContinueBtn').addEventListener('click', () => this.hideStreakVideo());
+                document.getElementById('wordInput').addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter') this.checkAnswer();
+                });
+                document.getElementById('wordInput').addEventListener('input', (e) => {
+                    // Play sound for direct typing in the input field
+                    if (e.inputType === 'insertText' || e.inputType === 'deleteContentBackward') {
+                        this.playKeyClickSound();
+                    }
+                    this.resetInputState();
+                });
+                
+                // Keyboard events
+                document.addEventListener('keydown', (e) => this.handlePhysicalKeyboard(e));
+                document.querySelectorAll('.key').forEach(key => {
+                    key.addEventListener('click', () => this.handleVirtualKeyboard(key.dataset.key));
+                });
+            }
+
+            playSound() {
+                const word = this.allQuestions[this.currentQuestionIndex].word;
+                this.playWordAudio(word);
+            }
+
+            playWordAudio(word) {
+                // First try to play external audio file
+                const audioFileName = word.toLowerCase() + '.mp3';
+                const audioPath = './audio/' + audioFileName; // You can change this path as needed
+                
+                const audio = new Audio();
+                
+                // Set up success handler
+                audio.addEventListener('canplaythrough', () => {
+                    console.log(`Playing audio file: ${audioPath}`);
+                    audio.play().catch(error => {
+                        console.log('Audio file play failed, falling back to speech synthesis:', error);
+                        this.fallbackToSpeechSynthesis(word);
+                    });
+                });
+                
+                // Set up error handler for file not found
+                audio.addEventListener('error', (error) => {
+                    console.log(`Audio file not found: ${audioPath}, using speech synthesis`);
+                    this.fallbackToSpeechSynthesis(word);
+                });
+                
+                // Try to load the audio file
+                audio.src = audioPath;
+                audio.load();
+            }
+
+            fallbackToSpeechSynthesis(word) {
+                // Fallback to Web Speech API if audio file is not available
+                try {
+                    const utterance = new SpeechSynthesisUtterance(word);
+                    utterance.rate = 0.7;
+                    utterance.volume = 1;
+                    utterance.lang = 'en-US'; // Set language explicitly
+                    
+                    // Add error handling for speech synthesis
+                    utterance.onerror = (event) => {
+                        console.error('Speech synthesis error:', event.error);
+                    };
+                    
+                    utterance.onstart = () => {
+                        console.log(`Speaking word: ${word}`);
+                    };
+                    
+                    speechSynthesis.speak(utterance);
+                } catch (error) {
+                    console.error('Speech synthesis failed:', error);
+                    // Could add a visual indicator here that audio is not available
+                }
+            }
+
+            playCorrectSound() {
+                // Create a pleasant success sound using Web Audio API
+                const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                
+                // Create a sequence of ascending notes for success
+                const frequencies = [523.25, 659.25, 783.99]; // C5, E5, G5 (major chord)
+                
+                frequencies.forEach((freq, index) => {
+                    const oscillator = audioContext.createOscillator();
+                    const gainNode = audioContext.createGain();
+                    
+                    oscillator.connect(gainNode);
+                    gainNode.connect(audioContext.destination);
+                    
+                    oscillator.frequency.setValueAtTime(freq, audioContext.currentTime);
+                    oscillator.type = 'sine';
+                    
+                    // Fade in and out
+                    gainNode.gain.setValueAtTime(0, audioContext.currentTime + index * 0.1);
+                    gainNode.gain.linearRampToValueAtTime(0.3, audioContext.currentTime + index * 0.1 + 0.05);
+                    gainNode.gain.linearRampToValueAtTime(0, audioContext.currentTime + index * 0.1 + 0.3);
+                    
+                    oscillator.start(audioContext.currentTime + index * 0.1);
+                    oscillator.stop(audioContext.currentTime + index * 0.1 + 0.3);
+                });
+            }
+
+            playIncorrectSound() {
+                // Create a gentle error sound using Web Audio API
+                const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                
+                // Create a descending tone for incorrect answer
+                const oscillator = audioContext.createOscillator();
+                const gainNode = audioContext.createGain();
+                
+                oscillator.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+                
+                // Start high and go low (disappointed sound)
+                oscillator.frequency.setValueAtTime(400, audioContext.currentTime);
+                oscillator.frequency.linearRampToValueAtTime(200, audioContext.currentTime + 0.5);
+                oscillator.type = 'sine';
+                
+                // Fade in and out
+                gainNode.gain.setValueAtTime(0, audioContext.currentTime);
+                gainNode.gain.linearRampToValueAtTime(0.2, audioContext.currentTime + 0.1);
+                gainNode.gain.linearRampToValueAtTime(0, audioContext.currentTime + 0.5);
+                
+                oscillator.start(audioContext.currentTime);
+                oscillator.stop(audioContext.currentTime + 0.5);
+            }
+
+            generateOptions(correctWord, count) {
+                const options = [correctWord];
+                
+                // Enhanced word-specific distractors with more variations
+                const wordDistractors = {
+                    'privilege': ['priviledge', 'privilage', 'privelege', 'privlege', 'privilige', 'previlege'],
+                    'february': ['feburary', 'febuary', 'februery', 'febraury', 'februray', 'febrary'],
+                    'guarantee': ['garantee', 'guarentee', 'garentee', 'guarante', 'guaranty', 'guarrantee'],
+                    'vacuum': ['vacum', 'vaccum', 'vacuume', 'vaccuum', 'vacume', 'vacuam'],
+                    'maintenance': ['maintanance', 'maintenence', 'maintainance', 'maintnance', 'maintanence', 'maintinance'],
+                    'acknowledge': ['acknowlege', 'aknowledge', 'acknoledge', 'acknowldge', 'acknowledg', 'aknowlege'],
+                    'rhythm': ['rythm', 'rhytm', 'rhythem', 'rithm', 'rhithm', 'rythem'],
+                    'restaurant': ['restaraunt', 'resturant', 'restraunt', 'restarant', 'restuarant', 'restaurent']
+                };
+                // Get word-specific distractors
+                let availableDistractors = [];
+                if (wordDistractors[correctWord]) {
+                    availableDistractors = [...wordDistractors[correctWord]];
+                } else {
+                    // If no specific distractors, create some based on the word
+                    availableDistractors = this.generateSimilarWords(correctWord);
+                }
+                
+                // Add distractors until we have enough options
+                while (options.length < count && availableDistractors.length > 0) {
+                    const randomIndex = Math.floor(Math.random() * availableDistractors.length);
+                    const distractor = availableDistractors.splice(randomIndex, 1)[0];
+                    if (distractor !== correctWord && !options.includes(distractor)) {
+                        options.push(distractor);
+                    }
+                }
+                
+                // If still need more options, create more variations
+                while (options.length < count) {
+                    const variation = this.createWordVariation(correctWord, options.length);
+                    if (!options.includes(variation)) {
+                        options.push(variation);
+                    }
+                }
+
+                // Always shuffle the options to ensure random order
+                return this.shuffleArray(options);
+            }
+            
+            generateSimilarWords(word) {
+                const variations = [];
+                const vowels = ['a', 'e', 'i', 'o', 'u'];
+                const consonants = ['b', 'c', 'd', 'f', 'g', 'h', 'j', 'k', 'l', 'm', 'n', 'p', 'q', 'r', 's', 't', 'v', 'w', 'x', 'y', 'z'];
+                
+                // Create variations by changing vowels
+                for (let i = 0; i < word.length; i++) {
+                    if (vowels.includes(word[i].toLowerCase())) {
+                        vowels.forEach(vowel => {
+                            if (vowel !== word[i].toLowerCase()) {
+                                const variation = word.substring(0, i) + vowel + word.substring(i + 1);
+                                variations.push(variation);
+                            }
+                        });
+                    }
+                }
+                
+                // Create variations by removing letters
+                for (let i = 1; i < word.length - 1; i++) {
+                    const variation = word.substring(0, i) + word.substring(i + 1);
+                    variations.push(variation);
+                }
+                
+                // Create variations by swapping adjacent letters
+                for (let i = 0; i < word.length - 1; i++) {
+                    const variation = word.substring(0, i) + word[i + 1] + word[i] + word.substring(i + 2);
+                    variations.push(variation);
+                }
+                
+                return variations.slice(0, 6); // Return up to 6 variations
+            }
+            
+            createWordVariation(word, index) {
+                const variations = [
+                    word.slice(0, -1), // Remove last letter
+                    word + word[word.length - 1], // Double last letter
+                    word.substring(0, 1) + word.substring(2), // Remove second letter
+                    word + 'e', // Add 'e' at the end
+                    word.replace(/e/g, 'a'), // Replace 'e' with 'a'
+                    word.replace(/i/g, 'e') // Replace 'i' with 'e'
+                ];
+                
+                return variations[index % variations.length] || word + 's';
+            }
+
+            shuffleArray(array) {
+                const shuffled = [...array];
+                for (let i = shuffled.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+                }
+                return shuffled;
+            }
+
+            displayCurrentQuestion() {
+                // Check if we've completed the main curriculum but haven't added learning mode yet
+                if (this.currentQuestionIndex >= this.allQuestions.length && this.stats.wordsToLearn.length > 0 && !this.learningModeAdded) {
+                    this.addLearningModeQuestions();
+                    this.learningModeAdded = true;
+                }
+
+                if (this.currentQuestionIndex >= this.allQuestions.length) {
+                    this.showCompletion();
+                    return;
+                }
+
+                const question = this.allQuestions[this.currentQuestionIndex];
+                this.currentAnswer = question.word;
+                this.isAnswered = false;
+                this.currentAttempt = 1;
+                this.previousAttempts = [];
+
+                // Update progress
+                const progress = ((this.currentQuestionIndex) / this.allQuestions.length) * 100;
+                document.getElementById('progressFill').style.width = progress + '%';
+                // Keep question counter empty as requested
+                document.getElementById('questionCounter').textContent = '';
+
+                // Show mode indicators
+                const modeIndicator = document.getElementById('modeIndicator');
+                if (this.isPracticeMode) {
+                    modeIndicator.textContent = 'Practice Mode';
+                    modeIndicator.className = 'mode-indicator practice-mode';
+                    modeIndicator.style.display = 'inline-block';
+                } else if (question.learningMode) {
+                    modeIndicator.textContent = 'Learning Mode';
+                    modeIndicator.className = 'mode-indicator';
+                    modeIndicator.style.display = 'inline-block';
+                } else {
+                    modeIndicator.style.display = 'none';
+                }
+
+                // Display word hint
+                this.displayWordHint(question.word);
+                
+                // Reset UI
+                this.resetUI();
+                
+                // Reset keyboard colors for new question
+                this.resetKeyboardColors();
+
+                // Display based on question type
+                switch (question.type) {
+                    case 'typing':
+                        this.displayTypingQuestion();
+                        break;
+                    case '4-option':
+                        this.displayMCQ(4);
+                        break;
+                    case '2-option':
+                        this.displayMCQ(2);
+                        break;
+                }
+            }
+
+            addLearningModeQuestions() {
+                console.log('Adding learning mode questions for:', this.stats.wordsToLearn);
+                
+                this.stats.wordsToLearn.forEach(word => {
+                    const learningQuestion = {
+                        word: word,
+                        type: '4-option',
+                        category: 'learning',
+                        learningMode: true
+                    };
+                    this.allQuestions.push(learningQuestion);
+                });
+                
+                // Update progress calculation since we added more questions
+                const progress = ((this.currentQuestionIndex) / this.allQuestions.length) * 100;
+                document.getElementById('progressFill').style.width = progress + '%';
+                // Keep question counter empty as requested
+                document.getElementById('questionCounter').textContent = '';
+            }
+
+            displayTypingQuestion() {
+                document.getElementById('questionType').textContent = 'Type what you hear';
+                document.getElementById('inputContainer').style.display = 'block';
+                document.getElementById('optionsContainer').style.display = 'none';
+                
+                // Setup word boxes
+                const question = this.allQuestions[this.currentQuestionIndex];
+                this.maxLength = question.word.length;
+                this.typedWord = '';
+                
+                // Hide previous attempt initially
+                document.getElementById('previousAttempt').style.display = 'none';
+                
+                this.createWordBoxes();
+                this.updateWordBoxes();
+            }
+
+            createWordBoxes() {
+                const wordBoxes = document.getElementById('wordBoxes');
+                wordBoxes.innerHTML = '';
+                
+                for (let i = 0; i < this.maxLength; i++) {
+                    const box = document.createElement('div');
+                    box.className = 'letter-box';
+                    box.id = `box-${i}`;
+                    wordBoxes.appendChild(box);
+                }
+            }
+
+            createPreviousAttemptBoxes(attempt) {
+                const previousWordBoxes = document.getElementById('previousWordBoxes');
+                previousWordBoxes.innerHTML = '';
+                
+                const correctWord = this.currentAnswer.toLowerCase();
+                const userWord = attempt.word.toLowerCase();
+                
+                // Create boxes first
+                const boxes = [];
+                for (let i = 0; i < this.maxLength; i++) {
+                    const box = document.createElement('div');
+                    box.className = 'letter-box disabled';
+                    
+                    if (i < attempt.word.length) {
+                        box.textContent = attempt.word[i].toUpperCase();
+                    }
+                    
+                    boxes.push(box);
+                    previousWordBoxes.appendChild(box);
+                }
+                
+                // Apply coloring using the same robust algorithm
+                if (attempt.isCorrect) {
+                    // If completely correct, mark all as correct
+                    for (let i = 0; i < userWord.length; i++) {
+                        boxes[i].classList.add('correct');
+                    }
+                } else {
+                    // Use the same two-pass algorithm as the main grid coloring
+                    const letterMap = {};
+                    for (const letter of correctWord) {
+                        letterMap[letter] = (letterMap[letter] || 0) + 1;
+                    }
+                    
+                    // First pass: mark correct letters (green)
+                    for (let i = 0; i < correctWord.length && i < userWord.length; i++) {
+                        const letterInGuess = userWord[i];
+                        const letterInWord = correctWord[i];
+                        
+                        if (letterInGuess === letterInWord) {
+                            boxes[i].classList.add('correct-position');
+                            // Decrement the count for this letter
+                            letterMap[letterInGuess]--;
+                        }
+                    }
+                    
+                    // Second pass: mark present or absent letters
+                    for (let i = 0; i < correctWord.length && i < userWord.length; i++) {
+                        const letterInGuess = userWord[i];
+                        const letterInWord = correctWord[i];
+                        
+                        // Skip letters already marked as correct
+                        if (letterInGuess === letterInWord) continue;
+                        
+                        if (correctWord.includes(letterInGuess) && letterMap[letterInGuess] > 0) {
+                            boxes[i].classList.add('wrong-position');
+                            // Decrement the count for this letter
+                            letterMap[letterInGuess]--;
+                        } else {
+                            boxes[i].classList.add('incorrect');
+                        }
+                    }
+                }
+            }
+
+            updateWordBoxes() {
+                for (let i = 0; i < this.maxLength; i++) {
+                    const box = document.getElementById(`box-${i}`);
+                    if (i < this.typedWord.length) {
+                        box.textContent = this.typedWord[i].toUpperCase();
+                        box.classList.add('filled');
+                        box.classList.remove('current');
+                    } else if (i === this.typedWord.length) {
+                        box.textContent = '';
+                        box.classList.remove('filled');
+                        box.classList.add('current');
+                    } else {
+                        box.textContent = '';
+                        box.classList.remove('filled', 'current');
+                    }
+                }
+                
+                // Update hidden input for compatibility
+                document.getElementById('wordInput').value = this.typedWord;
+            }
+
+            handlePhysicalKeyboard(e) {
+                const question = this.allQuestions[this.currentQuestionIndex];
+                if (question.type !== 'typing' || this.isAnswered) return;
+                
+                e.preventDefault();
+                
+                // Play key click sound for physical keyboard
+                this.playKeyClickSound();
+                
+                if (e.key === 'Backspace') {
+                    this.handleBackspace();
+                } else if (e.key.match(/^[a-zA-Z]$/) && this.typedWord.length < this.maxLength) {
+                    this.handleLetterInput(e.key.toLowerCase());
+                }
+            }
+
+            handleVirtualKeyboard(key) {
+                const question = this.allQuestions[this.currentQuestionIndex];
+                if (question.type !== 'typing' || this.isAnswered) return;
+                
+                // Play key click sound
+                this.playKeyClickSound();
+                
+                if (key === 'backspace') {
+                    this.handleBackspace();
+                } else if (key && key.match(/^[a-zA-Z]$/) && this.typedWord.length < this.maxLength) {
+                    this.handleLetterInput(key.toLowerCase());
+                }
+            }
+            
+            // Play sound when keyboard key is clicked
+            playKeyClickSound() {
+                const sound = document.getElementById('keyClickSound');
+                sound.currentTime = 0;
+                sound.play().catch(e => console.log('Sound play error:', e));
+            }
+            
+            // Play letter-specific sound for typing activity
+            playLetterSound(letter) {
+                const currentQuestion = this.allQuestions[this.currentQuestionIndex];
+                if (currentQuestion && currentQuestion.type === 'typing') {
+                    try {
+                        const utterance = new SpeechSynthesisUtterance(letter.toLowerCase());
+                        utterance.rate = 0.8;
+                        utterance.volume = 0.7;
+                        utterance.lang = 'en-US';
+                        
+                        // Add error handling
+                        utterance.onerror = (event) => {
+                            console.log('Letter sound error:', event.error);
+                        };
+                        
+                        speechSynthesis.speak(utterance);
+                    } catch (error) {
+                        console.log('Letter sound failed:', error);
+                    }
+                }
+            }
+
+            handleLetterInput(letter) {
+                if (this.typedWord.length < this.maxLength) {
+                    // Play letter sound for typing activity
+                    this.playLetterSound(letter);
+                    
+                    this.typedWord += letter;
+                    this.updateWordBoxes();
+                    this.resetInputState();
+                }
+            }
+
+            handleBackspace() {
+                if (this.typedWord.length > 0) {
+                    this.typedWord = this.typedWord.slice(0, -1);
+                    this.updateWordBoxes();
+                    this.resetInputState();
+                }
+            }
+
+            displayMCQ(optionCount) {
+                const question = this.allQuestions[this.currentQuestionIndex];
+                
+                if (question.learningMode) {
+                    document.getElementById('questionType').textContent = 'Learning Mode - Choose the correct spelling';
+                    // Removed questionText reference
+                } else if (this.isPracticeMode) {
+                    document.getElementById('questionType').textContent = 'Practice Mode - Choose the correct spelling';
+                    // Removed questionText reference
+                } else {
+                    document.getElementById('questionType').textContent = 
+                        optionCount === 4 ? 'Choose the correct spelling' : 'Pick the right one';
+                    // Removed questionText reference
+                }
+
+                document.getElementById('inputContainer').style.display = 'none';
+                
+                const optionsContainer = document.getElementById('optionsContainer');
+                optionsContainer.style.display = 'block';
+                optionsContainer.className = `options-container options-${optionCount}`;
+                
+                const options = this.generateOptions(question.word, optionCount);
+                optionsContainer.innerHTML = '';
+                
+                // For 4 options, create two rows with two options each
+                if (optionCount === 4) {
+                    // First row
+                    const row1 = document.createElement('div');
+                    row1.className = 'options-row';
+                    
+                    // Second row
+                    const row2 = document.createElement('div');
+                    row2.className = 'options-row';
+                    
+                    // Add options to rows
+                    options.forEach((option, index) => {
+                        const button = document.createElement('button');
+                        button.className = 'option-btn';
+                        button.textContent = option;
+                        button.style.flex = '1';
+                        button.addEventListener('click', () => this.selectOption(button, option));
+                        
+                        // First two options in first row, last two in second row
+                        if (index < 2) {
+                            row1.appendChild(button);
+                        } else {
+                            row2.appendChild(button);
+                        }
+                    });
+                    
+                    // Add rows to container
+                    optionsContainer.appendChild(row1);
+                    optionsContainer.appendChild(row2);
+                } else if (optionCount === 2) {
+                    // For 2 options, create one row with two options
+                    const row = document.createElement('div');
+                    row.className = 'options-row';
+                    
+                    // Add options to row
+                    options.forEach((option, index) => {
+                        const button = document.createElement('button');
+                        button.className = 'option-btn';
+                        button.textContent = option;
+                        button.style.flex = '1';
+                        button.addEventListener('click', () => this.selectOption(button, option));
+                        row.appendChild(button);
+                    });
+                    
+                    // Add row to container
+                    optionsContainer.appendChild(row);
+                }
+            }
+
+            selectOption(button, option) {
+                // Play option click sound
+                this.playOptionClickSound();
+                
+                // Remove previous selections
+                document.querySelectorAll('.option-btn').forEach(btn => {
+                    btn.classList.remove('selected');
+                });
+                
+                // Select current option
+                button.classList.add('selected');
+                this.selectedOption = option;
+                
+                // Enable check button
+                document.getElementById('checkButton').disabled = false;
+            }
+            
+            // Play sound when option is clicked
+            playOptionClickSound() {
+                const sound = document.getElementById('optionClickSound');
+                sound.currentTime = 0;
+                sound.play().catch(e => console.log('Sound play error:', e));
+            }
+
+            checkAnswer() {
+                if (this.isAnswered) return;
+
+                const question = this.allQuestions[this.currentQuestionIndex];
+                let userAnswer;
+                let isCorrect;
+
+                if (question.type === 'typing') {
+                    userAnswer = this.typedWord.trim().toLowerCase();
+                    isCorrect = userAnswer === question.word.toLowerCase();
+                    
+                    // Store this attempt
+                    this.previousAttempts.push({
+                        word: this.typedWord,
+                        isCorrect: isCorrect,
+                        attempt: this.currentAttempt
+                    });
+                    
+                    // Always update keyboard colors after each attempt (they persist)
+                    this.updateKeyboardColors(userAnswer, question.word.toLowerCase());
+                    
+                    // Always color the word boxes after each attempt
+                    this.colorWordBoxes(isCorrect);
+                    
+                    if (!isCorrect && this.currentAttempt < this.maxAttempts) {
+                        // Show first attempt and prepare for second attempt
+                        this.showPreviousAttempt();
+                        this.prepareNextAttempt();
+                        return;
+                    }
+                    
+                } else {
+                    userAnswer = this.selectedOption;
+                    isCorrect = userAnswer && userAnswer.toLowerCase() === question.word.toLowerCase();
+                    
+                    // Color the options
+                    document.querySelectorAll('.option-btn').forEach(btn => {
+                        const btnText = btn.textContent.toLowerCase();
+                        if (btnText === question.word.toLowerCase()) {
+                            btn.classList.add('correct');
+                        } else if (btn.classList.contains('selected') && !isCorrect) {
+                            btn.classList.add('incorrect');
+                        }
+                    });
+                }
+
+                this.isAnswered = true;
+                this.stats.total++;
+
+                if (isCorrect) {
+                    this.stats.correct++;
+                    this.currentStreak++; // Increment streak counter
+                    this.playCorrectSound(); // Play success sound
+                    this.showPunchEffect(); // Show Street Fighter punch effect
+                    this.showFeedback(true, 'Correct! Well done!');
+                    
+                    // Check if streak reached 5 and video hasn't been shown yet
+                    if (this.currentStreak === 5 && !this.hasShownStreakVideo) {
+                        this.hasShownStreakVideo = true;
+                        // Show the video after a brief delay to let the feedback show
+                        setTimeout(() => {
+                            this.showStreakVideo();
+                        }, 1500);
+                        return; // Exit early, video will handle continuation
+                    }
+                } else {
+                    this.currentStreak = 0; // Reset streak on incorrect answer
+                    this.playIncorrectSound(); // Play error sound
+                    this.showFeedback(false, `Incorrect. The correct answer is "${question.word}"`);
+                    
+                    // Track failed words based on category and type
+                    if (question.type === 'typing' && !this.isPracticeMode) {
+                        if (question.category === 'review') {
+                            // Mark failed review word
+                            if (!this.stats.failedReviewWords.includes(question.word)) {
+                                this.stats.failedReviewWords.push(question.word);
+                                console.log(`MARKED: Failed review word - ${question.word}`);
+                            }
+                        } else if (question.category === 'new') {
+                            // Mark failed new word
+                            if (!this.stats.failedNewWords.includes(question.word)) {
+                                this.stats.failedNewWords.push(question.word);
+                                console.log(`MARKED: Failed new word - ${question.word}`);
+                            }
+                        }
+                        
+                        // Just track for learning mode, don't add questions yet
+                        if (!this.stats.wordsToLearn.includes(question.word)) {
+                            this.stats.wordsToLearn.push(question.word);
+                        }
+                    }
+                    
+                    // Add MCQs for new words that were typed incorrectly (these still come immediately)
+                    if (question.category === 'new' && question.type === 'typing' && !question.learningMode) {
+                        this.addMCQsForNewWord(question.word);
+                    }
+                }
+
+                document.getElementById('checkButton').style.display = 'none';
+                document.getElementById('continueButton').style.display = 'inline-block';
+            }
+
+            showPreviousAttempt() {
+                const lastAttempt = this.previousAttempts[this.previousAttempts.length - 1];
+                this.createPreviousAttemptBoxes(lastAttempt);
+                document.getElementById('previousAttempt').style.display = 'block';
+            }
+
+            prepareNextAttempt() {
+                this.currentAttempt++;
+                this.typedWord = '';
+                
+                // Reset current attempt UI
+                this.resetInputState();
+                this.createWordBoxes();
+                this.updateWordBoxes();
+                
+                // Show feedback for incorrect attempt
+                this.showFeedback(false, `Try again! Attempt ${this.currentAttempt} of ${this.maxAttempts}`);
+                
+                // Reset buttons
+                document.getElementById('checkButton').style.display = 'inline-block';
+                document.getElementById('continueButton').style.display = 'none';
+                
+                // Clear feedback after showing it briefly
+                setTimeout(() => {
+                    document.getElementById('feedback').classList.remove('show');
+                }, 2000);
+            }
+
+            colorWordBoxes(isCorrect) {
+                const question = this.allQuestions[this.currentQuestionIndex];
+                const correctWord = question.word.toLowerCase();
+                const userWord = this.typedWord.toLowerCase();
+                
+                console.log('Coloring word boxes:', { userWord, correctWord, isCorrect });
+                
+                // Clear existing colors
+                for (let i = 0; i < this.maxLength; i++) {
+                    const box = document.getElementById(`box-${i}`);
+                    if (box) {
+                        box.classList.remove('current', 'correct', 'correct-position', 'wrong-position', 'incorrect');
+                    }
+                }
+                
+                if (isCorrect) {
+                    // If completely correct, mark all as correct
+                    for (let i = 0; i < userWord.length; i++) {
+                        const box = document.getElementById(`box-${i}`);
+                        if (box) {
+                            box.classList.add('correct');
+                            console.log(`Box ${i}: Added 'correct' class`);
+                        }
+                    }
+                } else {
+                    // Use the same two-pass algorithm as keyboard coloring
+                    // Create a map to track which letters in the target word have been matched
+                    const letterMap = {};
+                    for (const letter of correctWord) {
+                        letterMap[letter] = (letterMap[letter] || 0) + 1;
+                    }
+                    
+                    // First pass: mark correct letters (green)
+                    for (let i = 0; i < correctWord.length && i < userWord.length; i++) {
+                        const letterInGuess = userWord[i];
+                        const letterInWord = correctWord[i];
+                        
+                        if (letterInGuess === letterInWord) {
+                            const box = document.getElementById(`box-${i}`);
+                            if (box) {
+                                box.classList.add('correct-position');
+                                console.log(`Box ${i}: Added 'correct-position' class for letter '${letterInGuess}'`);
+                                // Decrement the count for this letter
+                                letterMap[letterInGuess]--;
+                            }
+                        }
+                    }
+                    
+                    // Second pass: mark present or absent letters
+                    for (let i = 0; i < correctWord.length && i < userWord.length; i++) {
+                        const letterInGuess = userWord[i];
+                        const letterInWord = correctWord[i];
+                        const box = document.getElementById(`box-${i}`);
+                        
+                        // Skip letters already marked as correct
+                        if (letterInGuess === letterInWord) continue;
+                        
+                        if (box) {
+                            if (correctWord.includes(letterInGuess) && letterMap[letterInGuess] > 0) {
+                                box.classList.add('wrong-position');
+                                console.log(`Box ${i}: Added 'wrong-position' class for letter '${letterInGuess}'`);
+                                // Decrement the count for this letter
+                                letterMap[letterInGuess]--;
+                            } else {
+                                box.classList.add('incorrect');
+                                console.log(`Box ${i}: Added 'incorrect' class for letter '${letterInGuess}'`);
+                            }
+                        }
+                    }
+                }
+                
+                // Force a repaint to ensure colors show up
+                setTimeout(() => {
+                    for (let i = 0; i < this.maxLength; i++) {
+                        const box = document.getElementById(`box-${i}`);
+                        if (box && i < userWord.length) {
+                            // Force style recalculation
+                            box.offsetHeight;
+                        }
+                    }
+                }, 100);
+            }
+
+            resetKeyboardColors() {
+                // Reset all keyboard keys to their default state
+                document.querySelectorAll('.key.letter').forEach(key => {
+                    key.classList.remove('correct', 'present', 'absent');
+                });
+            }
+
+            updateKeyStatus(letter, status) {
+                const key = document.querySelector(`[data-key="${letter.toLowerCase()}"]`);
+                if (!key) return;
+                
+                // Remove existing status classes
+                key.classList.remove('correct', 'present', 'absent');
+                
+                // Don't downgrade a key's status
+                if (key.classList.contains('correct')) return;
+                if (key.classList.contains('present') && status === 'absent') return;
+                
+                // Add new status class
+                key.classList.add(status);
+            }
+
+            updateKeyboardColors(userWord, correctWord) {
+                // Create a map to track which letters in the target word have been matched
+                const letterMap = {};
+                for (const letter of correctWord) {
+                    letterMap[letter] = (letterMap[letter] || 0) + 1;
+                }
+                
+                // First pass: mark correct letters
+                for (let i = 0; i < correctWord.length; i++) {
+                    const letterInGuess = userWord[i];
+                    const letterInWord = correctWord[i];
+                    
+                    if (letterInGuess === letterInWord) {
+                        // Mark this key on the keyboard
+                        this.updateKeyStatus(letterInGuess, 'correct');
+                        // Decrement the count for this letter
+                        letterMap[letterInGuess]--;
+                    }
+                }
+                
+                // Second pass: mark present or absent letters
+                for (let i = 0; i < correctWord.length; i++) {
+                    const letterInGuess = userWord[i];
+                    const letterInWord = correctWord[i];
+                    
+                    // Skip letters already marked as correct
+                    if (letterInGuess === letterInWord) continue;
+                    
+                    if (correctWord.includes(letterInGuess) && letterMap[letterInGuess] > 0) {
+                        this.updateKeyStatus(letterInGuess, 'present');
+                        // Decrement the count for this letter
+                        letterMap[letterInGuess]--;
+                    } else {
+                        this.updateKeyStatus(letterInGuess, 'absent');
+                    }
+                }
+            }
+
+            addMCQsForNewWord(word) {
+                // Add 4-option MCQ
+                const mcq4 = {
+                    word: word,
+                    type: '4-option',
+                    category: 'new',
+                    learningMode: true
+                };
+                
+                // Add 2-option MCQ
+                const mcq2 = {
+                    word: word,
+                    type: '2-option',
+                    category: 'new',
+                    learningMode: true
+                };
+                
+                // Insert after current question
+                this.allQuestions.splice(this.currentQuestionIndex + 1, 0, mcq4, mcq2);
+            }
+
+            startPracticeMode() {
+                // Collect all failed words for practice
+                const allFailedWords = [...this.stats.failedReviewWords, ...this.stats.failedNewWords];
+                
+                if (allFailedWords.length === 0) {
+                    alert('No words to practice!');
+                    return;
+                }
+
+                // Create practice questions (4-option MCQs only)
+                this.practiceQuestions = allFailedWords.map(word => ({
+                    word: word,
+                    type: '4-option',
+                    category: 'practice',
+                    learningMode: false
+                }));
+
+                // Reset for practice mode
+                this.isPracticeMode = true;
+                this.currentQuestionIndex = 0;
+                this.stats = {
+                    correct: 0,
+                    total: 0,
+                    wordsToLearn: [],
+                    failedReviewWords: this.stats.failedReviewWords,
+                    failedNewWords: this.stats.failedNewWords
+                };
+
+                // Reinitialize questions for practice mode
+                this.initializeQuestions();
+
+                // Show game content and hide completion screen
+                document.getElementById('gameContent').style.display = 'block';
+                document.getElementById('completionScreen').style.display = 'none';
+
+                // Start the practice session
+                this.displayCurrentQuestion();
+            }
+
+            startReviewMode() {
+                const allFailedWords = [...this.stats.failedReviewWords, ...this.stats.failedNewWords];
+                
+                if (allFailedWords.length === 0) {
+                    alert('No wrong words to review yet! Get some questions wrong first.');
+                    return;
+                }
+                
+                // Save current game state
+                this.savedGameState = {
+                    allQuestions: [...this.allQuestions],
+                    currentQuestionIndex: this.currentQuestionIndex,
+                    isPracticeMode: this.isPracticeMode,
+                    stats: { ...this.stats }
+                };
+                
+                // Start practice mode with failed words
+                this.isPracticeMode = true;
+                this.practiceQuestions = allFailedWords.map(word => ({
+                    word: word,
+                    type: 'typing',  // Changed from '4-option' to 'typing'
+                    category: 'review',
+                    learningMode: false
+                }));
+                
+                this.allQuestions = [...this.practiceQuestions];
+                this.currentQuestionIndex = 0;
+                
+                // Reset practice stats (but keep original stats)
+                const originalStats = { ...this.stats };
+                this.stats.correct = 0;
+                this.stats.total = 0;
+                this.originalStats = originalStats;
+                
+                this.displayCurrentQuestion();
+            }
+
+            displayWordHint(word) {
+                const hintElement = document.getElementById('wordHint');
+                const hintTextElement = document.getElementById('hintText');
+                
+                if (this.wordHints[word]) {
+                    hintTextElement.textContent = this.wordHints[word];
+                    hintElement.style.display = 'block';
+                } else {
+                    hintElement.style.display = 'none';
+                }
+            }
+
+
+
+            showFeedback(isCorrect, message) {
+                const feedback = document.getElementById('feedback');
+                feedback.textContent = message;
+                feedback.className = `feedback ${isCorrect ? 'correct' : 'incorrect'} show`;
+            }
+
+            nextQuestion() {
+                this.currentQuestionIndex++;
+                this.displayCurrentQuestion();
+            }
+
+            resetUI() {
+                document.getElementById('feedback').classList.remove('show');
+                document.getElementById('checkButton').style.display = 'inline-block';
+                document.getElementById('checkButton').disabled = false;
+                document.getElementById('continueButton').style.display = 'none';
+                this.resetInputState();
+                this.selectedOption = null;
+                
+                // Reset attempts display
+                document.getElementById('previousAttempt').style.display = 'none';
+                
+                // Reset keyboard colors
+                document.querySelectorAll('.key').forEach(key => {
+                    key.classList.remove('correct', 'wrong-position', 'incorrect');
+                });
+            }
+
+            resetInputState() {
+                const input = document.getElementById('wordInput');
+                input.value = '';
+                input.classList.remove('correct', 'incorrect');
+                
+                // Reset word boxes (but keep previous attempt boxes intact)
+                document.querySelectorAll('#wordBoxes .letter-box').forEach(box => {
+                    box.classList.remove('correct', 'incorrect', 'correct-position', 'wrong-position', 'filled', 'current');
+                });
+            }
+
+            showCompletion() {
+                document.getElementById('gameContent').style.display = 'none';
+                document.getElementById('completionScreen').style.display = 'block';
+                
+                // Set progress bar to 100% on completion
+                document.getElementById('progressFill').style.width = '100%';
+                
+                const accuracy = Math.round((this.stats.correct / this.stats.total) * 100);
+                
+                let statsHTML = `
+                    <div class="stat-item">
+                        <span>Questions Answered:</span>
+                        <span>${this.stats.total}</span>
+                    </div>
+                    <div class="stat-item">
+                        <span>Correct Answers:</span>
+                        <span>${this.stats.correct}</span>
+                    </div>
+                    <div class="stat-item">
+                        <span>Accuracy:</span>
+                        <span>${accuracy}%</span>
+                    </div>
+                `;
+
+                // Show failed words tracking
+                if (this.stats.failedReviewWords.length > 0) {
+                    statsHTML += `
+                        <div class="stat-item">
+                            <span>Failed Review Words:</span>
+                            <span>${this.stats.failedReviewWords.join(', ')}</span>
+                        </div>
+                    `;
+                }
+
+                if (this.stats.failedNewWords.length > 0) {
+                    statsHTML += `
+                        <div class="stat-item">
+                            <span>Failed New Words:</span>
+                            <span>${this.stats.failedNewWords.join(', ')}</span>
+                        </div>
+                    `;
+                }
+
+                document.getElementById('completionStats').innerHTML = statsHTML;
+
+                // Simplified card logic: Show card immediately if perfect score or after review completion
+                const allFailedWords = [...this.stats.failedReviewWords, ...this.stats.failedNewWords];
+                const failedWordsDisplay = document.getElementById('failedWordsDisplay');
+                const perfectScoreCard = document.getElementById('perfectScoreCard');
+                
+                if (this.isPracticeMode) {
+                    // After review completion, always show card
+                    document.querySelector('.completion-title').textContent = '🎯 Review Complete!';
+                    failedWordsDisplay.style.display = 'none';
+                    perfectScoreCard.style.display = 'block';
+                } else if (allFailedWords.length > 0) {
+                    // Main game with failed words - show review option
+                    const failedWordsList = document.getElementById('failedWordsList');
+                    failedWordsList.innerHTML = allFailedWords.map(word => 
+                        `<span class="failed-word-item">${word}</span>`
+                    ).join('');
+                    failedWordsDisplay.style.display = 'block';
+                    perfectScoreCard.style.display = 'none';
+                } else {
+                    // Perfect score in main game - show card immediately
+                    failedWordsDisplay.style.display = 'none';
+                    perfectScoreCard.style.display = 'block';
+                }
+            }
+            
+            showCard() {
+                // Calculate points based on performance
+                const accuracy = Math.round((this.stats.correct / this.stats.total) * 100);
+                let points = 50; // Base points
+                
+                if (accuracy === 100) {
+                    points = 150; // Perfect score bonus
+                } else if (accuracy >= 80) {
+                    points = 100; // Good performance
+                } else if (accuracy >= 60) {
+                    points = 75; // Average performance
+                }
+                
+                // Show card screen
+                document.getElementById('completionScreen').style.display = 'none';
+                document.getElementById('cardScreen').style.display = 'block';
+                
+                // Update points display
+                document.getElementById('cardPoints').textContent = `Points Earned: ${points}`;
+                
+                // Add some celebration animation
+                setTimeout(() => {
+                    const cardImage = document.getElementById('rewardCardImage');
+                    cardImage.style.transform = 'scale(1.1)';
+                    setTimeout(() => {
+                        cardImage.style.transform = 'scale(1)';
+                    }, 300);
+                }, 100);
+            }
+            
+            showPunchEffect() {
+                // Array of Street Fighter style words
+                const punchWords = ['POW!', 'BAM!', 'SMASH!', 'HIT!', 'COMBO!', 'FIGHT!', 'WIN!', 'BOOM!'];
+                const randomWord = punchWords[Math.floor(Math.random() * punchWords.length)];
+                
+                // Create punch effect element
+                const punchElement = document.createElement('div');
+                punchElement.className = 'punch-effect';
+                punchElement.textContent = randomWord;
+                
+                // Add to body
+                document.body.appendChild(punchElement);
+                
+                // Remove element after animation completes
+                setTimeout(() => {
+                    if (punchElement.parentNode) {
+                        punchElement.parentNode.removeChild(punchElement);
+                    }
+                }, 1200);
+            }
+            
+            showStreakVideo() {
+                const overlay = document.getElementById('streakVideoOverlay');
+                const video = document.getElementById('streakVideo');
+                
+                // Show the overlay
+                overlay.style.display = 'flex';
+                
+                // Reset and play the video
+                video.currentTime = 0;
+                video.play().catch(e => {
+                    console.log('Video play failed:', e);
+                    // If video fails to play, just show the overlay for 3 seconds
+                    setTimeout(() => {
+                        this.hideStreakVideo();
+                    }, 3000);
+                });
+                
+                // Auto-hide after video ends or after 10 seconds (whichever comes first)
+                const hideTimeout = setTimeout(() => {
+                    this.hideStreakVideo();
+                }, 10000);
+                
+                // Hide when video ends
+                const onVideoEnd = () => {
+                    clearTimeout(hideTimeout);
+                    // Add a small delay before hiding to let users see the message
+                    setTimeout(() => {
+                        this.hideStreakVideo();
+                    }, 2000);
+                    video.removeEventListener('ended', onVideoEnd);
+                };
+                
+                video.addEventListener('ended', onVideoEnd);
+            }
+            
+            hideStreakVideo() {
+                const overlay = document.getElementById('streakVideoOverlay');
+                const video = document.getElementById('streakVideo');
+                
+                // Hide the overlay
+                overlay.style.display = 'none';
+                
+                // Pause the video
+                video.pause();
+                
+                // Continue with the normal flow
+                document.getElementById('checkButton').style.display = 'none';
+                document.getElementById('continueButton').style.display = 'inline-block';
+            }
+            
+            restartGame() {
+                // Reset all screens
+                document.getElementById('cardScreen').style.display = 'none';
+                document.getElementById('completionScreen').style.display = 'none';
+                document.getElementById('gameContent').style.display = 'block';
+                
+                // Start new game
+                new SpellingApp();
+            }
+        }
+
+        function restartApp() {
+            document.getElementById('gameContent').style.display = 'block';
+            document.getElementById('completionScreen').style.display = 'none';
+            document.getElementById('cardScreen').style.display = 'none';
+            new SpellingApp();
+        }
+
+        // Initialize the app
+        const app = new SpellingApp();
+    </script>
+</body>
+</html>
