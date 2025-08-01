@@ -9,11 +9,6 @@
 <script src="https://cdn.jsdelivr.net/npm/es5-shim/es5-shim.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/es6-shim/es6-shim.min.js"></script>
 
-<!-- Street Fighter Style Font -->
-<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
-
-
-
     
     <!-- Audio files for sound effects -->
     <audio id="keyClickSound" preload="auto">
@@ -889,230 +884,150 @@
             }
         }
 
-        /* Streak Video Overlay Styles */
-        .streak-video-overlay {
+        /* Lightning Effect for 3 Streak */
+        .lightning-overlay {
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0, 0, 0, 0.9);
-            display: none;
-            justify-content: center;
-            align-items: center;
-            z-index: 9999;
-            animation: fadeIn 0.3s ease-in;
+            background: transparent;
+            pointer-events: none;
+            z-index: 9998;
+            opacity: 0;
         }
 
-        .streak-video-container {
-            text-align: center;
-            background: rgba(255, 255, 255, 0.1);
-            padding: 30px;
-            border-radius: 20px;
-            backdrop-filter: blur(10px);
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+        .lightning-bolt {
+            position: absolute;
+            top: 10%;
+            left: 20%;
+            width: 60%;
+            height: 80%;
+            opacity: 0;
+            animation: thunderStrike 2s ease-out forwards;
         }
 
-        .streak-title {
-            font-family: 'Orbitron', monospace;
-            color: #FFD700;
-            font-size: 42px;
-            font-weight: 900;
-            margin-bottom: 20px;
-            text-shadow: 
-                3px 3px 0px #FF0000,
-                6px 6px 0px #000000,
-                0 0 20px #FFD700,
-                0 0 30px #FFD700,
-                0 0 40px #FFD700;
-            animation: streetFighterGlow 1.5s ease-in-out infinite alternate;
-            letter-spacing: 4px;
-            text-transform: uppercase;
-            transform: perspective(500px) rotateX(15deg);
+        .lightning-bolt svg {
+            width: 100%;
+            height: 100%;
+            filter: drop-shadow(0 0 10px #00BFFF) drop-shadow(0 0 20px #87CEEB);
         }
 
-        .streak-subtitle {
-            color: white;
-            font-size: 18px;
-            margin-bottom: 30px;
-            opacity: 0.9;
+        .lightning-path {
+            stroke: #00BFFF;
+            stroke-width: 8;
+            fill: none;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+            stroke-dasharray: 1000;
+            stroke-dashoffset: 1000;
+            animation: drawLightning 1.5s ease-out forwards;
         }
 
-        .streak-video {
-            max-width: 80vw;
-            max-height: 60vh;
-            border-radius: 15px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+        .lightning-glow {
+            stroke: #FFFFFF;
+            stroke-width: 15;
+            fill: none;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+            opacity: 0.6;
+            stroke-dasharray: 1000;
+            stroke-dashoffset: 1000;
+            animation: drawLightning 1.5s ease-out forwards;
+            animation-delay: 0.1s;
         }
 
-        .streak-continue-btn {
-            background: #58cc02;
-            color: white;
-            border: none;
-            padding: 15px 30px;
-            border-radius: 12px;
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-            margin-top: 20px;
-            transition: all 0.3s ease;
-            text-transform: uppercase;
-            letter-spacing: 1px;
+        .thunder-flash {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle, rgba(135,206,235,0.3) 0%, transparent 70%);
+            opacity: 0;
+            animation: thunderFlash 2s ease-out;
         }
 
-        .streak-continue-btn:hover {
-            background: #46a302;
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(88, 204, 2, 0.4);
+        @keyframes thunderStrike {
+            0% { 
+                opacity: 0;
+                transform: scale(0.8) rotate(-5deg);
+            }
+            15% { 
+                opacity: 1;
+                transform: scale(1.1) rotate(2deg);
+            }
+            30% { 
+                opacity: 0.8;
+                transform: scale(1) rotate(-1deg);
+            }
+            45% { 
+                opacity: 1;
+                transform: scale(1.05) rotate(1deg);
+            }
+            60% { 
+                opacity: 0.9;
+                transform: scale(1) rotate(0deg);
+            }
+            100% { 
+                opacity: 0;
+                transform: scale(0.9) rotate(0deg);
+            }
         }
 
-        @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
-        }
-
-        @keyframes streetFighterGlow {
+        @keyframes drawLightning {
             0% {
-                text-shadow: 
-                    3px 3px 0px #FF0000,
-                    6px 6px 0px #000000,
-                    0 0 20px #FFD700,
-                    0 0 30px #FFD700,
-                    0 0 40px #FFD700;
-                transform: perspective(500px) rotateX(15deg) scale(1);
+                stroke-dashoffset: 1000;
+                opacity: 0;
+            }
+            10% {
+                stroke-dashoffset: 800;
+                opacity: 1;
             }
             50% {
-                text-shadow: 
-                    4px 4px 0px #FF4500,
-                    8px 8px 0px #000000,
-                    0 0 25px #FFD700,
-                    0 0 35px #FFD700,
-                    0 0 45px #FFD700,
-                    0 0 55px #FF0000;
-                transform: perspective(500px) rotateX(15deg) scale(1.05);
+                stroke-dashoffset: 0;
+                opacity: 1;
+            }
+            80% {
+                stroke-dashoffset: 0;
+                opacity: 0.8;
             }
             100% {
-                text-shadow: 
-                    5px 5px 0px #FF6600,
-                    10px 10px 0px #000000,
-                    0 0 30px #FFD700,
-                    0 0 40px #FFD700,
-                    0 0 50px #FFD700,
-                    0 0 60px #FF0000,
-                    0 0 70px #FF0000;
-                transform: perspective(500px) rotateX(15deg) scale(1.1);
-            }
-        }
-
-        @keyframes glow {
-            from {
-                text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5), 0 0 10px #FFD700;
-            }
-            to {
-                text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5), 0 0 20px #FFD700, 0 0 30px #FFD700;
-            }
-        }
-
-        /* Mobile Responsive */
-        @media (max-width: 768px) {
-            .streak-title {
-                font-size: 32px;
-                letter-spacing: 2px;
-                text-shadow: 
-                    2px 2px 0px #FF0000,
-                    4px 4px 0px #000000,
-                    0 0 15px #FFD700,
-                    0 0 25px #FFD700,
-                    0 0 35px #FFD700;
-            }
-            
-            .streak-subtitle {
-                font-size: 16px;
-            }
-            
-            .streak-video {
-                max-width: 90vw;
-                max-height: 50vh;
-            }
-            
-            .streak-video-container {
-                padding: 20px;
-                margin: 0 10px;
-            }
-        }
-
-        /* Street Fighter Punch Effect */
-        .punch-effect {
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            font-family: 'Orbitron', monospace;
-            font-size: 120px;
-            font-weight: 900;
-            color: #FFD700;
-            text-shadow: 
-                4px 4px 0px #FF0000,
-                8px 8px 0px #000000,
-                0 0 30px #FFD700,
-                0 0 40px #FFD700,
-                0 0 50px #FFD700;
-            z-index: 10000;
-            pointer-events: none;
-            opacity: 0;
-            animation: punchImpact 1.2s ease-out forwards;
-            text-transform: uppercase;
-            letter-spacing: 8px;
-        }
-
-        @keyframes punchImpact {
-            0% {
+                stroke-dashoffset: 0;
                 opacity: 0;
-                transform: translate(-50%, -50%) scale(0.3) rotate(-10deg);
-                filter: blur(10px);
             }
-            15% {
-                opacity: 1;
-                transform: translate(-50%, -50%) scale(1.5) rotate(5deg);
-                filter: blur(0px);
-                text-shadow: 
-                    6px 6px 0px #FF0000,
-                    12px 12px 0px #000000,
-                    0 0 40px #FFD700,
-                    0 0 50px #FFD700,
-                    0 0 60px #FFD700,
-                    0 0 70px #FF0000;
-            }
-            30% {
-                opacity: 1;
-                transform: translate(-50%, -50%) scale(1.2) rotate(-2deg);
-                filter: blur(0px);
-            }
-            60% {
-                opacity: 1;
-                transform: translate(-50%, -50%) scale(1.1) rotate(1deg);
-            }
-            100% {
+        }
+
+        @keyframes thunderFlash {
+            0% { 
                 opacity: 0;
-                transform: translate(-50%, -50%) scale(0.8) rotate(0deg);
-                filter: blur(5px);
+            }
+            5% { 
+                opacity: 0.4;
+            }
+            10% { 
+                opacity: 0;
+            }
+            15% { 
+                opacity: 0.6;
+            }
+            25% { 
+                opacity: 0;
+            }
+            30% { 
+                opacity: 0.3;
+            }
+            40% { 
+                opacity: 0;
+            }
+            100% { 
+                opacity: 0;
             }
         }
 
-        /* Mobile responsive punch effect */
-        @media (max-width: 768px) {
-            .punch-effect {
-                font-size: 80px;
-                letter-spacing: 4px;
-            }
-        }
 
-        @media (max-width: 480px) {
-            .punch-effect {
-                font-size: 60px;
-                letter-spacing: 2px;
-            }
-        }
+
+
     </style>
 </head>
 <body>
@@ -1234,16 +1149,21 @@
         </div>
     </div>
 
-    <!-- Streak Video Overlay -->
-    <div id="streakVideoOverlay" class="streak-video-overlay">
-        <div class="streak-video-container">
-            <div class="streak-title">🔥 5 STREAK! 🔥</div>
-            <div class="streak-subtitle">Amazing! You're on fire!</div>
-            <video id="streakVideo" class="streak-video" preload="none">
-                <source src="Untitled video - Made with Clipchamp.mp4" type="video/mp4">
-                Your browser does not support the video tag.
-            </video>
-            <button class="streak-continue-btn" id="streakContinueBtn">Continue</button>
+    <!-- Lightning Effect Overlay -->
+    <div id="lightningOverlay" class="lightning-overlay">
+        <div class="thunder-flash"></div>
+        <div class="lightning-bolt">
+            <svg viewBox="0 0 200 300" xmlns="http://www.w3.org/2000/svg">
+                <!-- Glow effect (behind) -->
+                <path class="lightning-glow" d="M50 20 L80 60 L60 60 L90 120 L70 120 L100 180 L80 180 L110 240 L90 240 L130 300 L100 260 L120 260 L90 200 L110 200 L80 140 L100 140 L70 80 L90 80 L60 40 L50 20 Z"/>
+                
+                <!-- Main lightning bolt -->
+                <path class="lightning-path" d="M50 20 L80 60 L60 60 L90 120 L70 120 L100 180 L80 180 L110 240 L90 240 L130 300 L100 260 L120 260 L90 200 L110 200 L80 140 L100 140 L70 80 L90 80 L60 40 L50 20 Z"/>
+                
+                <!-- Additional zigzag branches -->
+                <path class="lightning-path" d="M85 100 L110 130 L95 130" style="animation-delay: 0.3s;"/>
+                <path class="lightning-path" d="M95 200 L75 230 L85 230" style="animation-delay: 0.5s;"/>
+            </svg>
         </div>
     </div>
 
@@ -1295,9 +1215,9 @@
                 this.practiceCompleted = false;
                 this.learningModeAdded = false;
                 
-                // Streak tracking
+                // Streak tracking for lightning system
                 this.currentStreak = 0;
-                this.hasShownStreakVideo = false; // Prevent showing video multiple times
+                this.hasShownLightning = false;
                 
                 this.initializeQuestions();
                 this.bindEvents();
@@ -1347,7 +1267,6 @@
                 document.getElementById('startPracticeButton').addEventListener('click', () => this.startPracticeMode());
                 document.getElementById('showCardButton').addEventListener('click', () => this.showCard());
                 document.getElementById('finishButton').addEventListener('click', () => this.restartGame());
-                document.getElementById('streakContinueBtn').addEventListener('click', () => this.hideStreakVideo());
                 document.getElementById('wordInput').addEventListener('keypress', (e) => {
                     if (e.key === 'Enter') this.checkAnswer();
                 });
@@ -1996,18 +1915,10 @@
                     this.stats.correct++;
                     this.currentStreak++; // Increment streak counter
                     this.playCorrectSound(); // Play success sound
-                    this.showPunchEffect(); // Show Street Fighter punch effect
                     this.showFeedback(true, 'Correct! Well done!');
                     
-                    // Check if streak reached 5 and video hasn't been shown yet
-                    if (this.currentStreak === 5 && !this.hasShownStreakVideo) {
-                        this.hasShownStreakVideo = true;
-                        // Show the video after a brief delay to let the feedback show
-                        setTimeout(() => {
-                            this.showStreakVideo();
-                        }, 1500);
-                        return; // Exit early, video will handle continuation
-                    }
+                    // Handle streak animations
+                    this.handleStreakAnimations();
                 } else {
                     this.currentStreak = 0; // Reset streak on incorrect answer
                     this.playIncorrectSound(); // Play error sound
@@ -2466,75 +2377,51 @@
                 }, 100);
             }
             
-            showPunchEffect() {
-                // Array of Street Fighter style words
-                const punchWords = ['POW!', 'BAM!', 'SMASH!', 'HIT!', 'COMBO!', 'FIGHT!', 'WIN!', 'BOOM!'];
-                const randomWord = punchWords[Math.floor(Math.random() * punchWords.length)];
+            handleStreakAnimations() {
+                console.log(`Current streak: ${this.currentStreak}`);
                 
-                // Create punch effect element
-                const punchElement = document.createElement('div');
-                punchElement.className = 'punch-effect';
-                punchElement.textContent = randomWord;
-                
-                // Add to body
-                document.body.appendChild(punchElement);
-                
-                // Remove element after animation completes
-                setTimeout(() => {
-                    if (punchElement.parentNode) {
-                        punchElement.parentNode.removeChild(punchElement);
-                    }
-                }, 1200);
+                // Lightning effect on every answer after 3rd streak
+                if (this.currentStreak >= 3) {
+                    this.showLightningEffect();
+                }
             }
             
-            showStreakVideo() {
-                const overlay = document.getElementById('streakVideoOverlay');
-                const video = document.getElementById('streakVideo');
+            showLightningEffect() {
+                const lightningOverlay = document.getElementById('lightningOverlay');
+                const lightningBolt = lightningOverlay.querySelector('.lightning-bolt');
+                const thunderFlash = lightningOverlay.querySelector('.thunder-flash');
+                const lightningPaths = lightningOverlay.querySelectorAll('.lightning-path, .lightning-glow');
                 
-                // Show the overlay
-                overlay.style.display = 'flex';
-                
-                // Reset and play the video
-                video.currentTime = 0;
-                video.play().catch(e => {
-                    console.log('Video play failed:', e);
-                    // If video fails to play, just show the overlay for 3 seconds
-                    setTimeout(() => {
-                        this.hideStreakVideo();
-                    }, 3000);
+                // Reset all animations
+                lightningBolt.style.animation = 'none';
+                thunderFlash.style.animation = 'none';
+                lightningPaths.forEach(path => {
+                    path.style.animation = 'none';
                 });
                 
-                // Auto-hide after video ends or after 10 seconds (whichever comes first)
-                const hideTimeout = setTimeout(() => {
-                    this.hideStreakVideo();
-                }, 10000);
+                // Show the overlay
+                lightningOverlay.style.opacity = '1';
                 
-                // Hide when video ends
-                const onVideoEnd = () => {
-                    clearTimeout(hideTimeout);
-                    // Add a small delay before hiding to let users see the message
-                    setTimeout(() => {
-                        this.hideStreakVideo();
-                    }, 2000);
-                    video.removeEventListener('ended', onVideoEnd);
-                };
+                // Trigger the animations with a small delay
+                setTimeout(() => {
+                    lightningBolt.style.animation = 'thunderStrike 2s ease-out';
+                    thunderFlash.style.animation = 'thunderFlash 2s ease-out';
+                    
+                    // Restart path animations
+                    lightningPaths.forEach((path, index) => {
+                        const delay = path.classList.contains('lightning-glow') ? '0.1s' : '0s';
+                        const extraDelay = path.style.animationDelay || '0s';
+                        path.style.animation = `drawLightning 1.5s ease-out forwards`;
+                        path.style.animationDelay = extraDelay !== '0s' ? extraDelay : delay;
+                    });
+                }, 50);
                 
-                video.addEventListener('ended', onVideoEnd);
-            }
-            
-            hideStreakVideo() {
-                const overlay = document.getElementById('streakVideoOverlay');
-                const video = document.getElementById('streakVideo');
+                // Hide the overlay after animation completes
+                setTimeout(() => {
+                    lightningOverlay.style.opacity = '0';
+                }, 2100);
                 
-                // Hide the overlay
-                overlay.style.display = 'none';
-                
-                // Pause the video
-                video.pause();
-                
-                // Continue with the normal flow
-                document.getElementById('checkButton').style.display = 'none';
-                document.getElementById('continueButton').style.display = 'inline-block';
+                console.log('Cartoon lightning effect triggered at 3 streak!');
             }
             
             restartGame() {
@@ -2542,6 +2429,9 @@
                 document.getElementById('cardScreen').style.display = 'none';
                 document.getElementById('completionScreen').style.display = 'none';
                 document.getElementById('gameContent').style.display = 'block';
+                
+                // Reset lightning effects
+                document.getElementById('lightningOverlay').style.opacity = '0';
                 
                 // Start new game
                 new SpellingApp();
@@ -2552,6 +2442,10 @@
             document.getElementById('gameContent').style.display = 'block';
             document.getElementById('completionScreen').style.display = 'none';
             document.getElementById('cardScreen').style.display = 'none';
+            
+            // Reset lightning effects
+            document.getElementById('lightningOverlay').style.opacity = '0';
+            
             new SpellingApp();
         }
 
